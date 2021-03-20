@@ -1,12 +1,28 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
+#include <ESPRotary.h>
+#include <Button2.h>
 
-enum ViewType { year, organic, wordOfMouth, fb, repeat };
-ViewType currentView = organic;
-int currentYear = 2020;
+#define INITIAL_YEAR 2021
+
+// TODO: Clock view, parse Date header from response
+enum ViewType { year, organic, wordOfMouth, fb, repeat, theTime, NUM_VIEWTYPES };
+ViewType currentView = year;
+int currentYear = INITIAL_YEAR;
+int minYear = 2015;
+int maxYear = 2021;
+int hours;
+int mins;
+int currentMillis;
 
 const char* ssid = "1 Broncksea Road 2G";
 const char* password = "lekxmgmw";
+//const char* ssid = "SKYKQA3N";
+//const char* password = "96pVeG2XTse2";
+//const char* ssid = "Its brad";
+//const char* password = "bradspassword";
+//const char* ssid = "BT-NFASJW";
+//const char* password = "rRK6pkfCGMR3nf";
 
 const char* host = "e3autos.co.uk";
 const int httpsPort = 443;
@@ -15,76 +31,39 @@ String url = "/api/stats";
 // Use WiFiClientSecure class to create TLS connection
 WiFiClientSecure client;
 
-void connectToWifi() {
-//  Serial.print("connecting to ");
-//  Serial.println(ssid);
-  WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-  //  Serial.println("");
-  //  Serial.println("WiFi connected");
-  //  Serial.println("IP address: ");
-  //  Serial.println(WiFi.localIP());
-
-  // CBA to validate certs
-  client.setInsecure();
-}
-
-void fetchStats() {
-  if (!client.connect(host, httpsPort)) {
-    printTop("connection");
-    printBot("failed");
-    return;
-  }
-
-  client.print(String("GET ") + url + " HTTP/1.1\r\n" +
-               "Host: " + host + "\r\n" +
-               "User-Agent: Arduino\r\n" +
-               "Connection: close\r\n\r\n");
-
-  String line;
-
-  // Pass headers
-  while (client.connected()) {
-    line = client.readStringUntil('\n');
-    if (line == "\r") break;
-  }
-
-  String content;
-
-  while (client.available()) {
-    content = client.readString();
-  }
-
-  parse(content.c_str());
-}
-
-void updateLcd() {
-  printTop(getTitleForView(currentView).c_str());
-  printBot(String(getValueForView(currentView)).c_str());
-}
-
 void setup() {
-  setupLcd();
-  printTop("Loading");
-  printBot("..............");
+  Serial.begin(9600);
 
-  Serial.begin(115200);
+  currentMillis = millis();
+
+  setupRotaryEncoder();
+  setupLcd();
 
   connectToWifi();
-  // loadCurrentYear(); // to use as max for dial
   fetchStats();
-  updateLcd();
+  render();
 }
 
 void loop() {
-  // Detect dial turning left or right to inc/dec the year
-  // Update to show chosen year as twisting is happening
-  // Delay 500ms and then load stats for that year
+  rotaryLoop();
 
-  // Detect button press
-  // Cycle through stats already loaded into memory
+  int nextMillis = millis();
+  if (nextMillis - currentMillis >= 60000) { // 1 min
+    mins++;
+    if (mins == 60) {
+      mins = 00;
+      hours++;
+    }
+
+    if (hours == 24) {
+      hours = 0;
+    }
+
+    Serial.print(hours);
+    Serial.print(" ");
+    Serial.print(mins);
+
+    updateLcd();
+    currentMillis = nextMillis;
+  }
 }
