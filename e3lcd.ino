@@ -4,6 +4,7 @@
 #include <Button2.h>
 
 #define INITIAL_YEAR 2021
+#define DST          true
 
 // TODO: Clock view, parse Date header from response
 enum ViewType { year, organic, wordOfMouth, fb, repeat, theTime, NUM_VIEWTYPES };
@@ -15,14 +16,8 @@ int hours;
 int mins;
 int currentMillis;
 
-const char* ssid = "1 Broncksea Road 2G";
-const char* password = "lekxmgmw";
-//const char* ssid = "SKYKQA3N";
-//const char* password = "96pVeG2XTse2";
-//const char* ssid = "Its brad";
-//const char* password = "bradspassword";
-//const char* ssid = "BT-NFASJW";
-//const char* password = "rRK6pkfCGMR3nf";
+const char* ssid = "BT-NFASJW";
+const char* password = "rRK6pfkCGMR3nf";
 
 const char* host = "e3autos.co.uk";
 const int httpsPort = 443;

@@ -45,6 +45,10 @@ void fetchStats() {
       dateStr.trim();
       hours = dateStr.substring(0, 2).toInt();
       mins = dateStr.substring(3, 5).toInt();
+
+      if (DST) {
+        hours++;
+      }
     }
     if (line == "\r") break;
   }
