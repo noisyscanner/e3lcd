@@ -7,10 +7,6 @@ void connectToWifi() {
     delay(500);
     Serial.print(".");
   }
-  //  Serial.println("");
-  //  Serial.println("WiFi connected");
-  //  Serial.println("IP address: ");
-  //  Serial.println(WiFi.localIP());
 
   // CBA to validate certs
   client.setInsecure();
@@ -25,7 +21,7 @@ void fetchStats() {
     return;
   }
 
-  client.print(String("GET ") + url + "?year=" + String(currentYear) + " HTTP/1.1\r\n" +
+  client.print(String("GET ") + url + " HTTP/1.1\r\n" +
                "Host: " + host + "\r\n" +
                "User-Agent: Arduino\r\n" +
                "Connection: close\r\n\r\n");
@@ -37,18 +33,20 @@ void fetchStats() {
     line = client.readStringUntil('\n');
 
     // Parse date header to get current time
-    const char* headerName = "Date:";
+    const char* headerName = "date:";
     if (line.startsWith(String(headerName))) {
-      // 17 chars to start of time
-      short start = strlen(headerName) + 17;
-      String dateStr = line.substring(start, start + 9);
-      dateStr.trim();
-      hours = dateStr.substring(0, 2).toInt();
-      mins = dateStr.substring(3, 5).toInt();
+      short dateStart = strlen(headerName);
+      short timeStart = dateStart + 17;
 
-      if (DST) {
-        hours++;
-      }
+      // 17 chars to start of time from the end of the "Date: " prefix
+      dateStr = line.substring(dateStart, timeStart);
+      dateStr.trim();
+
+      String timeStr = line.substring(timeStart, timeStart + 9);
+      timeStr.trim();
+      hours = timeStr.substring(0, 2).toInt();
+      mins = timeStr.substring(3, 5).toInt();
+      seconds = timeStr.substring(6, 8).toInt();
     }
     if (line == "\r") break;
   }
@@ -59,5 +57,11 @@ void fetchStats() {
     content = client.readString();
   }
 
+  Serial.println(content);
+
   parse(content.c_str());
+
+  if (isDst) {
+    hours++;
+  }
 }
